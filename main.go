@@ -6,13 +6,9 @@ import (
 )
 
 func main() {
-	fileName := os.Args[1]
-	code, err := os.ReadFile(fileName)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "error: %s\n", err)
-		os.Exit(-1)
-	}
+	fmt.Println("Brainfuck REPL")
+	fmt.Println("Type Brainfuck code below")
 
-	m := NewMachine(string(code), os.Stdin, os.Stdout)
-	m.Execute()
+	// Start REPL
+	Start(os.Stdin, os.Stdout)
 }

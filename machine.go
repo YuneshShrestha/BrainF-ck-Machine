@@ -5,7 +5,7 @@ import (
 )
 
 type Machine struct {
-	code string
+	code []*Instruction
 	ip   int
 
 	memory [30000]int
@@ -17,7 +17,7 @@ type Machine struct {
 	buf []byte
 }
 
-func NewMachine(code string, in io.Reader, out io.Writer) *Machine {
+func NewMachine(code []*Instruction, in io.Reader, out io.Writer) *Machine {
 	return &Machine{
 		code:   code,
 		input:  in,
@@ -30,46 +30,38 @@ func (m *Machine) Execute() {
 	for m.ip < len(m.code) {
 		ins := m.code[m.ip]
 
-		switch ins {
-		case '+':
-			m.memory[m.dp]++
-		case '-':
-			m.memory[m.dp]--
-		case '>':
-			m.dp++
-		case '<':
-			m.dp--
-		case ',':
-			m.readChar()
-		case '.':
-			m.putChar()
-		case '[':
-			if m.memory[m.dp] == 0 {
-				depth := 1
-
-				for depth != 0 {
-					m.ip++
-					switch m.code[m.ip] {
-					case '[':
-						depth++
-					case ']':
-						depth--
-					}
-				}
+		switch ins.Type {
+		case Plus:
+			m.memory[m.dp] += ins.Argument
+		case Minus:
+			m.memory[m.dp] -= ins.Argument
+		case Right:
+			m.dp += ins.Argument
+		case Left:
+			m.dp -= ins.Argument
+		case ReadChar:
+			for i := 0; i < ins.Argument; i++ {
+				m.readChar()
 			}
-		case ']':
+		case PutChar:
+			for i := 0; i < ins.Argument; i++ {
+				m.putChar()
+			}
+		case JumpIfZero:
+			// If the memory value at the current data pointer is not 0,
+			// continue looping.
+			// The loop stops once the value becomes 0.
+			if m.memory[m.dp] == 0 {
+				m.ip = ins.Argument
+				continue
+			}
+		case JumpIfNotZero:
+			// If the memory value at the current data pointer is not 0,
+			// continue looping.
+			// The loop stops once the value becomes 0.
 			if m.memory[m.dp] != 0 {
-				depth := 1
-
-				for depth != 0 {
-					m.ip--
-					switch m.code[m.ip] {
-					case '[':
-						depth--
-					case ']':
-						depth++
-					}
-				}
+				m.ip = ins.Argument
+				continue
 			}
 		}
 
